@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Age of AI: Dominion</title>
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <canvas id="world"></canvas>
+  <div id="loading"><div class="ld-box"><div class="crest">⚔</div><h1>Age of AI <span>Dominion</span></h1><div class="ld-step" id="ld-step">Preparing the world…</div><div class="ld-bar"><i id="ld-bar"></i></div><p class="ld-tip" id="ld-tip"></p></div></div>
+  <div id="analytics" class="hidden"></div>
+
+  <!-- ===================== MENU ===================== -->
+  <section id="menu" class="screen">
+    <div class="menu-bg"></div>
+    <div id="menu-home" class="menu-panel home">
+      <div class="crest">⚔</div>
+      <h1>Age of AI <span>Dominion</span></h1>
+      <p class="tag">An autonomous war of AI nations. No human commands — only the strongest mind rules the map.</p>
+      <div class="home-actions">
+        <button class="btn primary big" data-go="setup">New Battle</button>
+        <button class="btn big" id="quick8">Quick Battle · 8 AIs</button>
+        <button class="btn" data-go="tourney">🏆 Tournament</button>
+        <button class="btn" data-go="replays">🎞 Replays</button>
+        <button class="btn" id="home-analytics">📈 Analytics</button>
+        <button class="btn" data-go="keys">AI Keys &amp; Models</button>
+        <button class="btn" data-go="codex">Codex</button>
+      </div>
+      <p class="foot">512×512 world · up to 8 nations · 400 population each · heroes, fleets, rebellions, governments, invented religions, morale, medicine</p>
+    </div>
+
+    <div id="menu-setup" class="menu-panel setup hidden">
+      <header><button class="btn ghost" data-go="home">← Back</button><h2>New Battle</h2><span class="grow"></span><button class="btn primary big" id="start">Start Battle ⚔</button></header>
+      <div class="setup-grid">
+        <div class="col">
+          <h3>World</h3>
+          <div id="map-types" class="map-types"></div>
+          <div class="row2">
+            <label>Map size<select id="opt-size"><option value="256">256 × 256 · small</option><option value="384">384 × 384 · large</option><option value="512" selected>512 × 512 · epic</option></select></label>
+            <label>Mode<select id="opt-mode"><option value="ffa">Free for all</option><option value="teams">Teams</option></select></label>
+            <label>Resources<select id="opt-res"><option value="low">Low</option><option value="standard" selected>Standard</option><option value="high">High</option></select></label>
+            <label>Peace treaty<select id="opt-peace"><option value="0">None</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option></select></label>
+            <label>Victory<select id="opt-victory"><option value="wonder180" selected>Conquest · Wonder · score at 3 h</option><option value="wonder120">Conquest · Wonder · score at 2 h</option><option value="wonder">Conquest · Wonder</option><option value="conquest">Conquest only</option></select></label>
+            <label>A nation is defeated when<select id="opt-defeat"><option value="total" selected>Everything is destroyed (total conquest)</option><option value="capitals">Its town centers and castles fall (faster)</option></select></label>
+            <label>Live AI calls<select id="opt-smart"><option value="smart" selected>Smart: only when something changes (fewer tokens)</option><option value="fixed">Fixed: on every interval</option></select></label>
+            <label>Budget per live nation<select id="opt-budget"><option value="0.5">$0.50 per game</option><option value="1" selected>$1 per game</option><option value="2">$2 per game</option><option value="5">$5 per game</option><option value="0">No limit</option></select></label>
+            <label>Live AI thinks every<select id="opt-llm"><option value="45">45 game-s</option><option value="60">60 game-s</option><option value="90" selected>90 game-s</option><option value="180">3 game-min</option></select></label>
+            <label>Start speed<select id="opt-speed"><option value="1">1×</option><option value="2">2×</option><option value="4" selected>4×</option><option value="8">8×</option></select></label>
+            <label>Seed<span class="seed"><input id="opt-seed" type="number" /><button class="btn ghost small" id="reseed">🎲</button></span></label>
+          </div>
+        </div>
+        <div class="col">
+          <h3>Nations <small id="pcount"></small></h3>
+          <div id="players"></div>
+          <div class="pl-actions"><button class="btn" id="addp">+ Add nation</button><button class="btn ghost" id="all8">All 8 AIs</button><button class="btn ghost" id="duel">Duel: Claude vs ChatGPT</button></div>
+          <p class="hint">Each AI has its own personality. Tick <b>Live</b> to let the real model (via your API key) set its nation's strategy every ~90 game-seconds; the built-in general carries it out.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="menu-keys" class="menu-panel keys hidden">
+      <header><button class="btn ghost" data-go="home">← Back</button><h2>AI Keys &amp; Models</h2></header>
+      <p class="hint">Keys are sent only to the local game server (<code>node server.mjs</code>), which calls the provider. You can also set them as environment variables (e.g. <code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>XAI_API_KEY</code>, <code>GEMINI_API_KEY</code>). Without a key a nation is played by its built-in personality.</p>
+      <div id="keys"></div>
+      <label class="check"><input type="checkbox" id="remember" /> Remember keys in this browser</label>
+      <h3>Models per AI <small class="hint">(provider · model · price $ per million tokens in / out, for the cost analytics)</small></h3>
+      <div id="models"></div>
+    </div>
+
+    <div id="menu-replays" class="menu-panel replays hidden">
+      <header><button class="btn ghost" data-go="home">← Back</button><h2>Replays</h2><span class="grow"></span><label class="btn">Open replay file…<input type="file" id="rep-file" accept=".json,application/json" hidden /></label></header>
+      <p class="hint">Every battle you watch is saved here when it ends or when you leave it (the last 12). A replay is the battle's seed and setup plus the orders the live models gave, so it plays out exactly the same again.</p>
+      <div id="replays"></div>
+    </div>
+
+    <div id="menu-tourney" class="menu-panel tourney hidden">
+      <header><button class="btn ghost" data-go="home">← Back</button><h2>Tournament</h2><span class="grow"></span><button class="btn primary big" id="t-run">Run tournament</button></header>
+      <p class="hint">Plays many battles in the background between the built-in AI personalities and keeps an Elo rating for each. Battles run at full speed in Web Workers; nothing is drawn. Live API models are not used here, so a tournament costs nothing.</p>
+      <div class="setup-grid">
+        <div class="col">
+          <h3>Contestants</h3><div id="t-ais" class="t-ais"></div>
+          <div class="row2">
+            <label>Format<select id="t-format"><option value="duel">Duels (1 vs 1)</option><option value="ffa4">Free for all · 4</option><option value="ffa8">Free for all · 8</option></select></label>
+            <label>Games<select id="t-games"><option>4</option><option selected>8</option><option>16</option><option>32</option><option>64</option></select></label>
+            <label>Map size<select id="t-size"><option value="192">192 · quick</option><option value="256" selected>256</option><option value="384">384</option><option value="512">512</option></select></label>
+            <label>Time limit<select id="t-min"><option value="45">45 min (score)</option><option value="60" selected>60 min (score)</option><option value="90">90 min (score)</option></select></label>
+            <label>Workers<select id="t-workers"></select></label>
+          </div>
+        </div>
+        <div class="col">
+          <h3>Elo ladder <button class="btn ghost small" id="t-reset">Reset ratings</button></h3><div id="t-ladder"></div>
+          <h3>Battles</h3><div id="t-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="menu-codex" class="menu-panel codex hidden">
+      <header><button class="btn ghost" data-go="home">← Back</button><h2>Codex</h2></header>
+      <div id="codex"></div>
+    </div>
+  </section>
+
+  <!-- ===================== HUD ===================== -->
+  <section id="hud" class="hidden">
+    <div id="topbar">
+      <div class="brand">Age of AI <span>Dominion</span></div>
+      <div id="clock">0:00</div>
+      <div class="speed" id="speed"></div>
+      <div id="realspeed"></div>
+      <div id="replay-ctl" class="hidden"><span class="tagp llm">🎞 REPLAY</span><button class="btn small ghost" id="r-skip" title="Jump 5 minutes ahead">+5 min</button></div>
+      <span class="grow"></span>
+      <button class="btn small" id="t-stats" title="Charts, key moments and heroes (G)">📊<span class="lbl"> Stats</span></button>
+      <button class="btn small" id="t-analytics" title="Analytics: model calls, tokens, cost, decisions, styles, what wins (I)">📈<span class="lbl"> Analytics</span></button>
+      <button class="btn small" id="t-gfx" title="Graphics quality">⚙<span class="lbl" id="t-gfx-l"> Auto</span></button>
+      <button class="btn small toggle" id="t-sfx" title="Battle sounds">🔊</button>
+      <button class="btn small toggle" id="t-music" title="Music (M)">🎵</button>
+      <button class="btn small toggle on" id="t-atmo" title="Day, night and weather">🌦</button>
+      <button class="btn small toggle on" id="t-director" title="Director camera follows the biggest battles">🎥<span class="lbl"> Director</span></button>
+      <button class="btn small toggle on" id="t-labels" title="Nation labels">🏷<span class="lbl"> Labels</span></button>
+      <button class="btn small" id="t-overview" title="Whole world (Home)">🗺<span class="lbl"> World</span></button>
+      <button class="btn small ghost" id="t-exit">✕<span class="lbl"> Menu</span></button>
+    </div>
+    <aside id="nations"></aside>
+    <aside id="detail" class="hidden"></aside>
+    <div id="log"><div class="log-tabs" id="log-tabs"></div><div id="log-list"></div></div>
+    <div id="mini-wrap"><canvas id="minimap"></canvas></div>
+    <div id="toasts"></div>
+    <div id="victory" class="hidden"></div>
+    <div id="stats" class="hidden"></div>
+    <div id="confirm" class="hidden"><div class="cf-box"><h3>Abandon this battle?</h3><p class="hint">The battle stops, live models stop thinking (no more API calls), and a replay is saved so you can watch it again.</p><div class="acts"><button class="btn" id="cf-no">No, keep watching</button><button class="btn primary" id="cf-yes">Yes, abandon</button></div></div></div>
+  </section>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

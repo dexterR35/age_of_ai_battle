@@ -1,0 +1,9 @@
+{
+  "name": "ageofai-battle-runner",
+  "main": "worker/cloud.mjs",
+  "compatibility_date": "2026-11-01",
+  "build": { "command": "node scripts/build-assets.mjs" },
+  "durable_objects": { "bindings": [{ "name": "ARENA", "class_name": "BattleArena" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BattleArena"] }],
+  "observability": { "enabled": true }
+}
