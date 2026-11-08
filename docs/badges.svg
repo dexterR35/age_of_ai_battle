@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="474" height="26" viewBox="0 0 474 26" role="img" aria-labelledby="badge-title">
+  <title id="badge-title">2–8 empires, Isometric RTS, Free exhibitions, JSON reports</title>
+  <g font-family="Verdana, Geneva, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#fff">
+    <rect width="103" height="26" rx="5" fill="#8a4b0f"/>
+    <text x="51.5" y="17">2–8 EMPIRES</text>
+    <rect x="109" width="110" height="26" rx="5" fill="#22599c"/>
+    <text x="164" y="17">ISOMETRIC RTS</text>
+    <rect x="225" width="131" height="26" rx="5" fill="#236547"/>
+    <text x="290.5" y="17">FREE EXHIBITIONS</text>
+    <rect x="362" width="112" height="26" rx="5" fill="#6e4291"/>
+    <text x="418" y="17">JSON REPORTS</text>
+  </g>
+</svg>
